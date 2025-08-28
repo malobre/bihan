@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "files": [],
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "types": ["urlpattern-polyfill"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "composite": true,
+    "isolatedDeclarations": true,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "declarationDir": "${configDir}/node_modules/.cache/bihan/tsc/declarations",
+    "outDir": "${configDir}/node_modules/.cache/bihan/tsc/out",
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "exactOptionalPropertyTypes": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "allowImportingTsExtensions": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noErrorTruncation": true
+  },
+  "references": [
+    {
+      "path": "./tsconfig.src.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
+    }
+  ]
+}

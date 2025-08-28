@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "extends": "./tsconfig.json",
+  "files": ["vitest.config.ts"],
+  "include": ["src/**/*.spec.ts", "src/**/*.spec-d.ts"],
+  "compilerOptions": {
+    "types": ["vitest", "urlpattern-polyfill"],
+    "isolatedDeclarations": false
+  },
+  "references": [{ "path": "./tsconfig.src.json" }]
+}
