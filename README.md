@@ -1,4 +1,4 @@
-# Bihan
+# 🤏 Bihan
 
 A tiny, type-safe router built on URLPattern with zero dependencies.
 
