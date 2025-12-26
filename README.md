@@ -2,6 +2,12 @@
 
 A tiny, type-safe router built on URLPattern with zero dependencies.
 
+> **⚠️ Experimental Package**
+>
+> This package is experimental and under active development.
+> Routing performance is sub-optimal (routes are matched linearly).
+> The primary goal of this experiment is to develop a type-safe routing API.
+
 ## Installation
 
 ```bash
@@ -16,28 +22,28 @@ import { route } from '@malobre/bihan';
 await route(
   ({ on }) => [
     // Simple route returning data
-    on('GET', '/health')(() => ({ status: 'ok' })),
+    on('GET', '/health').pipe(() => ({ status: 'ok' })),
 
     // Route with path parameters
-    on('GET', '/users/:id')((ctx) => {
+    on('GET', '/users/:id').pipe((ctx) => {
       const userId = ctx.urlPatternResult.pathname.groups['id'];
       return Response.json({ userId });
     }),
 
     // Middleware chain with context augmentation
-    on('POST', '/api/user')(
-      // First handler: authentication middleware
-      (ctx) => {
+    on('POST', '/api/user')
+      .pipe((ctx) => {
+        // First handler: authentication middleware
         if (!ctx.request.headers.get('authorization')) {
           return new Response('Unauthorized', { status: 401 });
         }
         // Augment context and continue to next handler
         return ctx.with({ user: { id: '123' } });
-      }
-    )(
-      // Second handler: final response with typed context
-      (ctx) => Response.json({ message: `User ${ctx.user.id}` })
-    ),
+      })
+      .pipe((ctx) => {
+        // Second handler: final response with typed context
+        return Response.json({ message: `User ${ctx.user.id}` });
+      }),
   ],
   request
 );
@@ -60,7 +66,6 @@ Routes an incoming request to the first matching handler.
 **Behavior:**
 
 - Routes are matched in order - first match wins
-- Both HTTP method and URL pattern must match
 - Errors from handlers propagate to the caller
 
 #### `on(method, pattern)`
@@ -75,33 +80,33 @@ Registers a route and returns a chain builder.
   - URLPattern object: `new URLPattern({ pathname: '/users/:id' })`
   - URLPatternInit: `{ pathname: '/users/:id', search: '*' }`
 
+**Returns:** A chain object with a `.pipe(handler)` method for adding handlers.
+
 **Chain Behavior:**
 
-Handlers receive a `Context<T>` and can return:
+Handlers are added using `.pipe(handler)` and receive a `Context<T>`. They can return:
 
-- **Any value** (including `null`, `false`, `0`) - Terminates chain and returns that value
 - **`ctx.with(data)`** - Augments context with new data and continues to next handler
-- **`ctx`** - Passes context unchanged to next handler
-- **`undefined`** - Continues to next handler without modifying context
+- **`ctx`** or **`undefined`** - Passes context unchanged to next handler
+- **Any other value** - Terminates chain and returns that value
 
 ### `Context<T>`
 
-The context object passed to handlers contains:
+The initial context object passed to handlers contains:
 
 ```typescript
 {
-  request: Request;                    // The incoming HTTP request
-  urlPatternResult: URLPatternResult;  // URLPattern match results
+  request: Request;                     // The incoming HTTP request
+  urlPatternResult: URLPatternResult;   // URLPattern match results
   with: <U>(data: U) => Context<T & U>; // Augment context
-  branch: (...) => Promise<...>;       // Run sub-chains (see Advanced)
-  ...T                                 // Your custom context data
+  ...T                                  // Your custom context data
 }
 ```
 
 **Accessing Path Parameters:**
 
 ```typescript
-on('GET', '/users/:userId/posts/:postId')((ctx) => {
+on('GET', '/users/:userId/posts/:postId').pipe((ctx) => {
   const { userId, postId } = ctx.urlPatternResult.pathname.groups;
   return Response.json({ userId, postId });
 })
@@ -116,11 +121,11 @@ Group related routes together and order from most specific to least specific:
 ```typescript
 await route(({ on }) => [
   // Specific routes first
-  on('GET', '/api/users/:id')(getUserById),
-  on('POST', '/api/users')(createUser),
+  on('GET', '/api/users/:id').pipe(getUserById),
+  on('POST', '/api/users').pipe(createUser),
 
   // Wildcards last
-  on('GET', '/api/*')(catchAllApi),
+  on('GET', '/api/*').pipe(catchAllApi),
 ], request);
 ```
 
@@ -151,9 +156,9 @@ const validateBody = async <TCtxData>(ctx: Context<TCtxData>) => {
 
 // Use in routes
 on('POST', '/api/users')
-  (requireAuth)
-  (validateBody)
-  ((ctx) => {
+  .pipe(requireAuth)
+  .pipe(validateBody)
+  .pipe((ctx) => {
     // TypeScript infers ctx has { token: string, body: any }
     return Response.json({ created: true });
   })
@@ -188,18 +193,16 @@ try {
 Let TypeScript infer types through the chain:
 
 ```typescript
-on('POST', '/api/posts')(
-  (ctx) => {
+on('POST', '/api/posts')
+  .pipe((ctx) => {
     // TypeScript knows ctx has { request, urlPatternResult, ... }
     return ctx.with({ userId: '123' });
-  }
-)(
-  (ctx) => {
+  })
+  .pipe((ctx) => {
     // TypeScript infers ctx has { userId: string }
     ctx.userId; // ✓ Type-safe!
     return Response.json({ success: true });
-  }
-)
+  })
 ```
 
 ## Advanced Features
@@ -216,7 +219,7 @@ const appContext = {
 
 await route(
   ({ on }) => [
-    on('GET', '/users')(async (ctx) => {
+    on('GET', '/users').pipe(async (ctx) => {
       // ctx.db and ctx.config are available in all handlers
       const users = await ctx.db.query('SELECT * FROM users');
       return Response.json(users);
@@ -227,24 +230,6 @@ await route(
 );
 ```
 
-### Context Branching
-
-Run sub-chains with `ctx.branch()` for conditional logic or composition:
-
-```typescript
-on('POST', '/api/process')(async (ctx) => {
-  // Run a sub-chain with its own context flow
-  const result = await ctx.branch(
-    (run) => run
-      ((ctx) => ctx.with({ step: 1, data: 'processing' }))
-      ((ctx) => ctx.with({ step: 2 }))
-      ((ctx) => ({ finalStep: ctx.step, data: ctx.data })),
-  );
-
-  return Response.json({ result }); // { result: { finalStep: 2, data: 'processing' } }
-})
-```
-
 ### Full URLPattern Support
 
 Use any URLPattern features, not just pathname:
@@ -253,7 +238,7 @@ Use any URLPattern features, not just pathname:
 on('GET', {
   pathname: '/api/:version/*',
   search: 'key=:apiKey',
-})((ctx) => {
+}).pipe((ctx) => {
   const { version } = ctx.urlPatternResult.pathname.groups;
   const { apiKey } = ctx.urlPatternResult.search.groups;
   return Response.json({ version, apiKey });
@@ -266,7 +251,7 @@ const pattern = new URLPattern({
   pathname: '/v:version/*',
 });
 
-on('GET', pattern)((ctx) => {
+on('GET', pattern).pipe((ctx) => {
   // Full control over matching
 })
 ```
@@ -276,8 +261,70 @@ on('GET', pattern)((ctx) => {
 Match any HTTP method with `'*'`:
 
 ```typescript
-on('*', '/health')((ctx) => {
+on('*', '/health').pipe((ctx) => {
   // Responds to GET, POST, PUT, DELETE, etc.
   return Response.json({ status: 'ok' });
 })
+```
+
+### Helper Utilities
+
+Bihan provides helper utilities for common middleware tasks:
+
+#### `withHeader`
+
+Validates that a header is present or has a specific value:
+
+```typescript
+import { withHeader } from '@malobre/bihan/with-header.js';
+
+on('POST', '/api/data')
+  .pipe(withHeader('Content-Type', 'application/json'))
+  .pipe((ctx) => {
+    // Content-Type is validated
+    return Response.json({ success: true });
+  })
+
+// Or just check for presence
+on('POST', '/api/data')
+  .pipe(withHeader('X-API-Key'))
+  .pipe((ctx) => {
+    // X-API-Key header is present
+    return Response.json({ success: true });
+  })
+```
+
+#### `withContentType`
+
+Validates the Content-Type header (case-insensitive):
+
+```typescript
+import { withContentType } from '@malobre/bihan/with-content-type.js';
+
+on('POST', '/api/data')
+  .pipe(withContentType('application/json'))
+  .pipe((ctx) => {
+    // Content-Type is validated
+    return Response.json({ success: true });
+  })
+```
+
+#### `withAuthorization`
+
+Parses and validates the Authorization header:
+
+```typescript
+import { withAuthorization } from '@malobre/bihan/with-authorization.js';
+
+on('GET', '/api/protected')
+  .pipe(withAuthorization(({ scheme, credentials }, ctx) => {
+    if (scheme !== 'Bearer' || !isValidToken(credentials)) {
+      return new Response('Invalid token', { status: 401 });
+    }
+    return ctx.with({ token: credentials });
+  }))
+  .pipe((ctx) => {
+    // ctx.token is available
+    return Response.json({ data: 'protected' });
+  })
 ```
