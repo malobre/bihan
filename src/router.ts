@@ -15,7 +15,7 @@ export type Handler<TCtxData extends object, TReturn> = (
 ) => TReturn;
 
 type RouteMeta = {
-  method: string;
+  method: string | string[] | typeof AnyMethod;
   pattern: URLPattern;
 };
 
@@ -26,7 +26,7 @@ type RouteChain<TCtxData extends object, TRes = unknown> = Chain<
   RouteMeta
 >;
 
-// Standardized HTTP methods
+// Standardized HTTP methods + string escape hatch
 // See:
 // - <https://www.rfc-editor.org/rfc/rfc9110.html#section-9>
 // - <https://www.rfc-editor.org/rfc/rfc5789.html>
@@ -39,7 +39,10 @@ type Method =
   | "CONNECT"
   | "OPTIONS"
   | "TRACE"
-  | "PATCH";
+  | "PATCH"
+  | (string & {});
+
+export const AnyMethod: unique symbol = Symbol();
 
 type CreateRoutes<
   TCtxData extends object,
@@ -48,10 +51,7 @@ type CreateRoutes<
   on,
 }: {
   on: (
-    method:
-      | Method
-      | "*" // wildcard
-      | (string & {}), // escape hatch
+    method: Method | Method[] | typeof AnyMethod,
     // A pathname component pattern, URLPattern or URLPatternInit
     pattern: string | URLPattern | URLPatternInit,
   ) => NilChain<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
@@ -86,7 +86,7 @@ export const route: {
   // we should use a prefix trie.
   for (const route of Iterator.from(
     createRoutes({
-      on: (method: string, pattern: string | URLPattern | URLPatternInit) =>
+      on: (method, pattern) =>
         createChain({
           method,
           pattern:
@@ -98,7 +98,12 @@ export const route: {
         }),
     }),
   )) {
-    if (route.meta.method !== "*" && request.method !== route.meta.method) {
+    if (
+      route.meta.method !== AnyMethod &&
+      (Array.isArray(route.meta.method)
+        ? !route.meta.method.some((method) => method === request.method)
+        : route.meta.method !== request.method)
+    ) {
       continue;
     }
 

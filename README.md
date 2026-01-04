@@ -74,7 +74,10 @@ Registers a route and returns a chain builder.
 
 **Parameters:**
 
-- `method` - HTTP method (`'GET'`, `'POST'`, etc.) or `'*'` for wildcard
+- `method` - HTTP method (`'GET'`, `'POST'`, etc.) as:
+  - a string
+  - an array of strings
+  - `AnyMethod` symbol
 - `pattern` - URL pattern as:
   - String (interpreted as pathname): `'/users/:id'`
   - URLPattern object: `new URLPattern({ pathname: '/users/:id' })`
@@ -258,10 +261,10 @@ on('GET', pattern).pipe((ctx) => {
 
 ### Wildcard Method Matching
 
-Match any HTTP method with `'*'`:
+Match any HTTP method with `AnyMethod` symbol:
 
 ```typescript
-on('*', '/health').pipe((ctx) => {
+on(AnyMethod, '/health').pipe((ctx) => {
   // Responds to GET, POST, PUT, DELETE, etc.
   return Response.json({ status: 'ok' });
 })

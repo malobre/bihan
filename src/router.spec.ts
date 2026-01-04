@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { route } from "./router.ts";
+import { AnyMethod, route } from "./router.ts";
 
 describe("Router", () => {
   describe("route registration", () => {
@@ -12,6 +12,22 @@ describe("Router", () => {
       );
 
       expect(result).toEqual({ status: "ok" });
+    });
+
+    it("registers routes with `AnyMethod` symbol", async () => {
+      expect(
+        await route(
+          ({ on }) => [on(AnyMethod, "/health").pipe(() => "healthy")],
+          new Request("http://dummy.invalid/health", { method: "GET" }),
+        ),
+      ).toBe("healthy");
+
+      expect(
+        await route(
+          ({ on }) => [on(AnyMethod, "/health").pipe(() => "healthy")],
+          new Request("http://dummy.invalid/health", { method: "CUSTOM" }),
+        ),
+      ).toBe("healthy");
     });
 
     it("registers routes with different HTTP methods", async () => {
