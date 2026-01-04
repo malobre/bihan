@@ -47,14 +47,14 @@ type CreateRoutes<
 > = ({
   on,
 }: {
-  on(
+  on: (
     method:
       | Method
       | "*" // wildcard
       | (string & {}), // escape hatch
     // A pathname component pattern, URLPattern or URLPatternInit
     pattern: string | URLPattern | URLPatternInit,
-  ): NilChain<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
+  ) => NilChain<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
 }) => TRoutes;
 
 // Routes an incoming HTTP request to the first matching handler.
