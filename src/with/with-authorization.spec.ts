@@ -11,7 +11,10 @@ it("works", () => {
   });
 
   expect(
-    withAuthorization(validator)(
+    withAuthorization(
+      validator,
+      "",
+    )(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -33,7 +36,10 @@ it("handles empty header", () => {
   });
 
   expect(
-    withAuthorization(validator)(
+    withAuthorization(
+      validator,
+      "",
+    )(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -57,7 +63,10 @@ it("handles missing `Authorization` header", () => {
   });
 
   expect(
-    withAuthorization(validator)(
+    withAuthorization(
+      validator,
+      "",
+    )(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -80,7 +89,10 @@ it("handles validator failure", () => {
   });
 
   expect(
-    withAuthorization(validator)(
+    withAuthorization(
+      validator,
+      "",
+    )(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,

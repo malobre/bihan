@@ -14,6 +14,7 @@ export type AuthorizeFn<TCtx extends object, TRes> = (
 // <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate#syntax>
 export const withAuthorization = <TCtx extends RouteIntrinsics, TRes>(
   authorize: AuthorizeFn<TCtx, TRes>,
+  challenge: string,
 ): Handler<TCtx, TRes | Response> =>
   withHeaderFn("Authorization", (authorization, ctx) => {
     if (authorization === null) {
@@ -22,7 +23,7 @@ export const withAuthorization = <TCtx extends RouteIntrinsics, TRes>(
         {
           status: 401,
           headers: {
-            "WWW-Authenticate": "Bearer",
+            "WWW-Authenticate": challenge,
           },
         },
       );
