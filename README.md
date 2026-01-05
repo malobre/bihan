@@ -30,19 +30,12 @@ await route(
       return Response.json({ userId });
     }),
 
-    // Middleware chain with context augmentation
-    on('POST', '/api/user')
+    // Middleware with context augmentation
+    on('GET', '/api/user')
+      .pipe((ctx) => ctx.with({user: "John"}))
       .pipe((ctx) => {
-        // First handler: authentication middleware
-        if (!ctx.request.headers.get('authorization')) {
-          return new Response('Unauthorized', { status: 401 });
-        }
-        // Augment context and continue to next handler
-        return ctx.with({ user: { id: '123' } });
-      })
-      .pipe((ctx) => {
-        // Second handler: final response with typed context
-        return Response.json({ message: `User ${ctx.user.id}` });
+        // ctx.user is properly typed
+        return Response.json({ message: `Hello ${ctx.user}` });
       }),
   ],
   request
@@ -57,7 +50,7 @@ Routes an incoming request to the first matching handler.
 
 **Parameters:**
 
-- `createRoutes` - Factory function that receives `{ on }` and returns an array of routes
+- `createRoutes` - Factory function that returns an array of routes
 - `request` - The incoming `Request` object
 - `ctxData` - Optional initial context data available to all handlers
 
@@ -70,28 +63,25 @@ Routes an incoming request to the first matching handler.
 
 #### `on(method, pattern)`
 
-Registers a route and returns a chain builder.
+Registers a route and returns a pipe builder.
 
 **Parameters:**
 
-- `method` - HTTP method (`'GET'`, `'POST'`, etc.) as:
-  - a string
-  - an array of strings
-  - `AnyMethod` symbol
+- `method` - an HTTP method, an array of methods, or `AnyMethod` symbol
 - `pattern` - URL pattern as:
   - String (interpreted as pathname): `'/users/:id'`
   - URLPattern object: `new URLPattern({ pathname: '/users/:id' })`
   - URLPatternInit: `{ pathname: '/users/:id', search: '*' }`
 
-**Returns:** A chain object with a `.pipe(handler)` method for adding handlers.
+**Returns:** A pipe builder with a `.pipe(handler)` method for adding handlers.
 
-**Chain Behavior:**
+**Pipe Behavior:**
 
 Handlers are added using `.pipe(handler)` and receive a `Context<T>`. They can return:
 
-- **`ctx.with(data)`** - Augments context with new data and continues to next handler
-- **`ctx`** or **`undefined`** - Passes context unchanged to next handler
-- **Any other value** - Terminates chain and returns that value
+- **`Context` object** - pass the context to the next handler
+- **`undefined`** - keep the current context for the next handler
+- **Any other value** - Terminates the route and returns that value
 
 ### `Context<T>`
 
@@ -189,23 +179,6 @@ try {
   console.error('Route error:', error);
   return new Response('Internal Server Error', { status: 500 });
 }
-```
-
-### Type Safety
-
-Let TypeScript infer types through the chain:
-
-```typescript
-on('POST', '/api/posts')
-  .pipe((ctx) => {
-    // TypeScript knows ctx has { request, urlPatternResult, ... }
-    return ctx.with({ userId: '123' });
-  })
-  .pipe((ctx) => {
-    // TypeScript infers ctx has { userId: string }
-    ctx.userId; // ✓ Type-safe!
-    return Response.json({ success: true });
-  })
 ```
 
 ## Advanced Features
