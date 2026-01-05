@@ -5,7 +5,9 @@ export type ExpectFn<TCtx extends RouteIntrinsics, TRes> = (
   context: Context<TCtx>,
 ) => TRes;
 
-// Check for presence if `expected` is `undefined`, otherwise check for strict equality with `expected`
+// Checks that a header is present, and, if provided, strictly equal to `expected`.
+//
+// `name` is case-insensitive.
 export const withHeader = (
   name: string,
   expected?: string | null,
