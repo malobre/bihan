@@ -2,6 +2,22 @@ import { expect, it, vi } from "vitest";
 import { createContext } from "../context.ts";
 import { withHeader } from "./with-header.ts";
 
+it("can check for presence", () => {
+  const request = new Request("https://localhost", {
+    headers: { "X-custom": "value" },
+  });
+
+  expect(
+    withHeader("X-custom")(
+      createContext({
+        request,
+        urlPatternResult: {} as unknown as URLPatternResult,
+        branch: vi.fn(),
+      }),
+    ),
+  ).toBeUndefined();
+});
+
 it("fails on missing header", async () => {
   const request = new Request("https://localhost");
 
