@@ -1,8 +1,8 @@
-import { expect, test, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import { createContext } from "../context.ts";
 import { withHeader } from "./with-header.ts";
 
-test("missing header", async () => {
+it("fails on missing header", async () => {
   const request = new Request("https://localhost");
 
   const result = withHeader(
@@ -25,7 +25,7 @@ test("missing header", async () => {
   `);
 });
 
-test("correct value", () => {
+it("can check for value", () => {
   const request = new Request("https://localhost", {
     headers: { "X-custom": "value" },
   });
@@ -44,7 +44,7 @@ test("correct value", () => {
   ).toBeUndefined();
 });
 
-test("wrong value", async () => {
+it("fails on wrong value", async () => {
   const request = new Request("https://localhost", {
     headers: { "X-custom": "invalid" },
   });

@@ -1,46 +1,44 @@
-import { describe, expect, test, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import { createContext } from "../context.ts";
 import { withContentType } from "./with-content-type.ts";
 
-describe("match", () => {
-  test("identity", () => {
-    const request = new Request("https://localhost", {
-      method: "POST",
-      body: JSON.stringify(null),
-      headers: { "Content-Type": "application/json" },
-    });
-
-    expect(
-      withContentType("application/json")(
-        createContext({
-          request,
-          urlPatternResult: {} as unknown as URLPatternResult,
-          branch: vi.fn(),
-        }),
-      ),
-    ).toBeUndefined();
+it("works", () => {
+  const request = new Request("https://localhost", {
+    method: "POST",
+    body: JSON.stringify(null),
+    headers: { "Content-Type": "application/json" },
   });
 
-  test("different letter case", () => {
-    const request = new Request("https://localhost", {
-      method: "POST",
-      body: JSON.stringify(null),
-      headers: { "Content-Type": "APPLICATION/JSON" },
-    });
-
-    expect(
-      withContentType("application/json")(
-        createContext({
-          request,
-          urlPatternResult: {} as unknown as URLPatternResult,
-          branch: vi.fn(),
-        }),
-      ),
-    ).toBeUndefined();
-  });
+  expect(
+    withContentType("application/json")(
+      createContext({
+        request,
+        urlPatternResult: {} as unknown as URLPatternResult,
+        branch: vi.fn(),
+      }),
+    ),
+  ).toBeUndefined();
 });
 
-test("no match", () => {
+it("ignores case", () => {
+  const request = new Request("https://localhost", {
+    method: "POST",
+    body: JSON.stringify(null),
+    headers: { "Content-Type": "APPLICATION/JSON" },
+  });
+
+  expect(
+    withContentType("application/json")(
+      createContext({
+        request,
+        urlPatternResult: {} as unknown as URLPatternResult,
+        branch: vi.fn(),
+      }),
+    ),
+  ).toBeUndefined();
+});
+
+it("fails on wrong value", () => {
   const request = new Request("https://localhost", {
     method: "POST",
     body: JSON.stringify(null),

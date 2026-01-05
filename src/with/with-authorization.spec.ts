@@ -1,8 +1,8 @@
-import { describe, expect, test, vi } from "vitest";
+import { expect, it, vi } from "vitest";
 import { createContext } from "../context.ts";
 import { withAuthorization } from "./with-authorization.ts";
 
-test("it works", () => {
+it("works", () => {
   const validator = vi.fn();
 
   const request = new Request("https://localhost", {
@@ -24,7 +24,7 @@ test("it works", () => {
   expect(validator).toHaveReturnedWith(undefined);
 });
 
-test("empty header", () => {
+it("handles empty header", () => {
   const validator = vi.fn();
 
   const request = new Request("https://localhost", {
@@ -49,47 +49,45 @@ test("empty header", () => {
   );
 });
 
-describe("rejects", () => {
-  test("missing `Authorization` header", () => {
-    const validator = vi.fn();
+it("handles missing `Authorization` header", () => {
+  const validator = vi.fn();
 
-    const request = new Request("https://localhost", {
-      method: "GET",
-    });
-
-    expect(
-      withAuthorization(validator)(
-        createContext({
-          request,
-          urlPatternResult: {} as unknown as URLPatternResult,
-          branch: vi.fn(),
-        }),
-      ),
-    ).not.toBeUndefined();
-
-    expect(validator).not.toBeCalled();
+  const request = new Request("https://localhost", {
+    method: "GET",
   });
 
-  test("validator failure", () => {
-    const validator = vi.fn(() => "You shall not pass");
+  expect(
+    withAuthorization(validator)(
+      createContext({
+        request,
+        urlPatternResult: {} as unknown as URLPatternResult,
+        branch: vi.fn(),
+      }),
+    ),
+  ).not.toBeUndefined();
 
-    const request = new Request("https://localhost", {
-      method: "GET",
-      headers: {
-        Authorization: "Bearer my_invalid_token",
-      },
-    });
+  expect(validator).not.toBeCalled();
+});
 
-    expect(
-      withAuthorization(validator)(
-        createContext({
-          request,
-          urlPatternResult: {} as unknown as URLPatternResult,
-          branch: vi.fn(),
-        }),
-      ),
-    ).not.toBeUndefined();
+it("handles validator failure", () => {
+  const validator = vi.fn(() => "You shall not pass");
 
-    expect(validator).toHaveBeenCalledOnce();
+  const request = new Request("https://localhost", {
+    method: "GET",
+    headers: {
+      Authorization: "Bearer my_invalid_token",
+    },
   });
+
+  expect(
+    withAuthorization(validator)(
+      createContext({
+        request,
+        urlPatternResult: {} as unknown as URLPatternResult,
+        branch: vi.fn(),
+      }),
+    ),
+  ).not.toBeUndefined();
+
+  expect(validator).toHaveBeenCalledOnce();
 });
