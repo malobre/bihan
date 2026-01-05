@@ -33,6 +33,9 @@ export const withHeader = (
             ),
       );
 
+// Runs `expect` function against a header.
+//
+// `name` is case-insensitive.
 export const withHeaderFn =
   <TCtx extends RouteIntrinsics, TRes>(
     name: string,

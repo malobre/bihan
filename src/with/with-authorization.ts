@@ -6,6 +6,12 @@ export type AuthorizeFn<TCtx extends object, TRes> = (
   ctx: Context<TCtx>,
 ) => TRes;
 
+// Calls the provided function with the scheme and credentials, extracted from
+// the `Authorization` header.
+//
+// `challenge` is the value of the `WWW-Authenticate` header returned with the
+// response when the `Authorization` header isn't set, see MDN for syntax:
+// <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate#syntax>
 export const withAuthorization = <TCtx extends RouteIntrinsics, TRes>(
   authorize: AuthorizeFn<TCtx, TRes>,
 ): Handler<TCtx, TRes | Response> =>
