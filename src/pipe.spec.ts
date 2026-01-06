@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { createChain } from "./chain.ts";
 import { createContext } from "./context.ts";
+import { createPipe } from "./pipe.ts";
 
 const routerContext = <TCtxData>(data?: TCtxData) => createContext(data ?? {});
 
-describe("chain", () => {
+describe("pipe", () => {
   describe("basic functionality", () => {
     it("executes single handler and returns result", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe(() => "result")
         .intoHandler();
 
@@ -17,8 +17,8 @@ describe("chain", () => {
       expect(result).toBe("result");
     });
 
-    it("passes context through chain until termination", async () => {
-      const handler = createChain()
+    it("passes context through pipe until termination", async () => {
+      const handler = createPipe()
         .pipe((ctx) => ctx.with({ step: 1 }))
         .pipe((ctx) => ctx.with({ step: 2 }))
         .pipe((ctx) => `completed step ${ctx.step}`)
@@ -32,7 +32,7 @@ describe("chain", () => {
 
   describe("context accumulation", () => {
     it("accumulates context data across multiple handlers", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => ctx.with({ user: "john" }))
         .pipe((ctx) => ctx.with({ role: "admin" }))
         .pipe((ctx) => ({
@@ -47,7 +47,7 @@ describe("chain", () => {
     });
 
     it("overrides context properties", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ value: "initial" });
         })
@@ -70,7 +70,7 @@ describe("chain", () => {
         customParams: { id: "123" },
       };
 
-      const handler = createChain<typeof initialData>()
+      const handler = createPipe<typeof initialData>()
         .pipe((ctx) => ctx.with({ authenticated: true }))
         .pipe((ctx) => ({
           customRequest: ctx.customRequest,
@@ -91,7 +91,7 @@ describe("chain", () => {
 
   describe("async handling", () => {
     it("handles async handlers", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe(async (ctx) => {
           await new Promise((resolve) => setTimeout(resolve, 1));
           return ctx.with({ asyncData: "loaded" });
@@ -108,7 +108,7 @@ describe("chain", () => {
     });
 
     it("handles mixed sync and async handlers", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ sync: true });
         })
@@ -130,7 +130,7 @@ describe("chain", () => {
     });
 
     it("handles async termination", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ data: "test" });
         })
@@ -147,9 +147,9 @@ describe("chain", () => {
   });
 
   describe("conditional logic", () => {
-    it("handles conditional chain continuation", async () => {
+    it("handles conditional pipe continuation", async () => {
       const createConditionalHandler = (shouldContinue: boolean) => {
-        return createChain()
+        return createPipe()
           .pipe((ctx) => {
             if (shouldContinue) {
               return ctx.with({ continued: true });
@@ -174,7 +174,7 @@ describe("chain", () => {
     });
 
     it("handles complex branching logic", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ userType: "admin" });
         })
@@ -203,7 +203,7 @@ describe("chain", () => {
 
   describe("error handling", () => {
     it("propagates errors from handlers", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ data: "test" });
         })
@@ -216,7 +216,7 @@ describe("chain", () => {
     });
 
     it("propagates errors from async handlers", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe(async (ctx) => {
           return ctx.with({ data: "test" });
         })
@@ -233,9 +233,9 @@ describe("chain", () => {
   });
 
   describe("edge cases", () => {
-    it("handles empty chain gracefully", async () => {
+    it("handles empty pipe gracefully", async () => {
       // Single handler that immediately terminates
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((_ctx) => "immediate result")
         .intoHandler();
 
@@ -245,7 +245,7 @@ describe("chain", () => {
     });
 
     it("returns undefined when all handlers return contexts", async () => {
-      const handler = createChain()
+      const handler = createPipe()
         .pipe((ctx) => {
           return ctx.with({ step: 1 });
         })
@@ -263,7 +263,7 @@ describe("chain", () => {
       const falsyValues = [false, 0, "", null, undefined];
 
       for (const falsyValue of falsyValues) {
-        const handler = createChain()
+        const handler = createPipe()
           .pipe((ctx) => {
             return ctx.with({ test: true });
           })

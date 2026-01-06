@@ -1,5 +1,5 @@
-import { type Chain, createChain, type NilChain } from "./chain.ts";
 import { type Context, createContext } from "./context.ts";
+import { createPipe, type NilPipe, type Pipe } from "./pipe.ts";
 
 export type RouteIntrinsics = {
   // The incoming HTTP request
@@ -19,7 +19,7 @@ type RouteMeta = {
   pattern: URLPattern;
 };
 
-type RouteChain<TCtxData extends object, TRes = unknown> = Chain<
+type RoutePipe<TCtxData extends object, TRes = unknown> = Pipe<
   Context.MergeUnwrapped<RouteIntrinsics, TCtxData>,
   object,
   TRes,
@@ -46,7 +46,7 @@ export const AnyMethod: unique symbol = Symbol();
 
 type CreateRoutes<
   TCtxData extends object,
-  TRoutes extends RouteChain<TCtxData>[],
+  TRoutes extends RoutePipe<TCtxData>[],
 > = ({
   on,
 }: {
@@ -54,7 +54,7 @@ type CreateRoutes<
     method: Method | Method[] | typeof AnyMethod,
     // A pathname component pattern, URLPattern or URLPatternInit
     pattern: string | URLPattern | URLPatternInit,
-  ) => NilChain<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
+  ) => NilPipe<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
 }) => TRoutes;
 
 // Routes an incoming HTTP request to the first matching handler.
@@ -62,7 +62,7 @@ type CreateRoutes<
 // Routes are matched in the order they are defined. The first route that matches
 // both the HTTP method and URL pattern will handle the request.
 export const route: {
-  <TRoutes extends RouteChain<object>[]>(
+  <TRoutes extends RoutePipe<object>[]>(
     createRoutes: CreateRoutes<object, TRoutes>,
     request: Request,
     ctxData?: undefined,
@@ -70,14 +70,14 @@ export const route: {
     Awaited<ReturnType<ReturnType<TRoutes[number]["intoHandler"]>>> | undefined
   >;
 
-  <TCtxData extends object, TRoutes extends RouteChain<TCtxData>[]>(
+  <TCtxData extends object, TRoutes extends RoutePipe<TCtxData>[]>(
     createRoutes: CreateRoutes<TCtxData, TRoutes>,
     request: Request,
     ctxData: TCtxData,
   ): Promise<
     Awaited<ReturnType<ReturnType<TRoutes[number]["intoHandler"]>>> | undefined
   >;
-} = async <TCtxData extends object, TRoutes extends RouteChain<TCtxData>[]>(
+} = async <TCtxData extends object, TRoutes extends RoutePipe<TCtxData>[]>(
   createRoutes: CreateRoutes<TCtxData, TRoutes>,
   request: Request,
   ctxData: TCtxData,
@@ -87,7 +87,7 @@ export const route: {
   for (const route of Iterator.from(
     createRoutes({
       on: (method, pattern) =>
-        createChain({
+        createPipe({
           method,
           pattern:
             pattern instanceof URLPattern
@@ -130,8 +130,8 @@ export const route: {
 
 export const branch = async <TRes, TCtxData extends object>(
   factory: (
-    pipe: NilChain<NoInfer<TCtxData>, undefined>["pipe"],
-  ) => Chain<NoInfer<TCtxData>, object, TRes, undefined>,
+    pipe: NilPipe<NoInfer<TCtxData>, undefined>["pipe"],
+  ) => Pipe<NoInfer<TCtxData>, object, TRes, undefined>,
   ctx: Context<TCtxData>,
 ): Promise<TRes> =>
-  await factory(createChain<TCtxData>().pipe).intoHandler()(ctx);
+  await factory(createPipe<TCtxData>().pipe).intoHandler()(ctx);

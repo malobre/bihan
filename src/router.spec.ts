@@ -333,8 +333,8 @@ describe("Router", () => {
     });
   });
 
-  describe("middleware chain integration", () => {
-    it("integrates with chain for middleware processing", async () => {
+  describe("middleware pipe integration", () => {
+    it("integrates with pipe for middleware processing", async () => {
       const authorizedResult = await route(
         ({ on }) => [
           on("GET", { pathname: "/api/user" })
@@ -386,7 +386,7 @@ describe("Router", () => {
       expect((unauthorizedResult as Response).status).toBe(401);
     });
 
-    it("handles complex middleware chains", async () => {
+    it("handles complex middleware pipes", async () => {
       const result = await route(
         ({ on }) => [
           on("POST", { pathname: "/api/process" })
@@ -431,7 +431,7 @@ describe("Router", () => {
       });
     });
 
-    it("handles async middleware chains", async () => {
+    it("handles async middleware pipes", async () => {
       const result = await route(
         ({ on }) => [
           on("GET", { pathname: "/api/async" })
@@ -456,7 +456,7 @@ describe("Router", () => {
       });
     });
 
-    it("handles mixed sync/async middleware chains", async () => {
+    it("handles mixed sync/async middleware pipes", async () => {
       const result = await route(
         ({ on }) => [
           on("POST", { pathname: "/api/mixed" })
@@ -512,21 +512,21 @@ describe("Router", () => {
       ).rejects.toThrow("Async handler error");
     });
 
-    it("propagates chain middleware errors", async () => {
+    it("propagates pipe middleware errors", async () => {
       await expect(
         route(
           ({ on }) => [
-            on("GET", { pathname: "/chain-error" })
+            on("GET", { pathname: "/pipe-error" })
               .pipe((ctx) => {
                 return ctx.with({ data: "test" });
               })
               .pipe((_ctx) => {
-                throw new Error("Chain middleware error");
+                throw new Error("Pipe middleware error");
               }),
           ],
-          new Request("http://dummy.invalid/chain-error"),
+          new Request("http://dummy.invalid/pipe-error"),
         ),
-      ).rejects.toThrow("Chain middleware error");
+      ).rejects.toThrow("Pipe middleware error");
     });
   });
 

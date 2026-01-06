@@ -4,7 +4,7 @@ import type { Handler } from "./router.ts";
 // Extract non-context types from handler return type
 type ExtractNonCtx<T> = T extends Context<infer _TCtxData> ? never : T;
 
-export interface Chain<
+export interface Pipe<
   TInitialCtxData extends object,
   TCtxData extends object,
   TResponse,
@@ -12,15 +12,15 @@ export interface Chain<
 > {
   pipe<TReturn>(
     handler: [TCtxData] extends [never]
-      ? // Terminated chain
+      ? // Terminated pipe
         never
-      : // Partial chain
+      : // Partial pipe
         Handler<TCtxData, TReturn>,
-  ): Chain<
+  ): Pipe<
     TInitialCtxData,
     | (undefined extends Awaited<TReturn> ? TCtxData : never)
     | Context.Unwrap<Awaited<TReturn>>,
-    // If TResponse is strictly undefined (which would be the case for a nil chain), override, otherwise accumulate.
+    // If TResponse is strictly undefined (which would be the case for a nil pipe), override, otherwise accumulate.
     | (undefined extends TResponse ? never : TResponse)
     | ExtractNonCtx<Awaited<TReturn>>,
     TMeta
@@ -31,19 +31,19 @@ export interface Chain<
   meta: TMeta;
 }
 
-export type NilChain<TCtxData extends object, TMeta> = Chain<
+export type NilPipe<TCtxData extends object, TMeta> = Pipe<
   TCtxData,
   TCtxData,
   undefined,
   TMeta
 >;
 
-const chainImpl = <TCtxData extends object, TMeta>(
+const pipeImpl = <TCtxData extends object, TMeta>(
   handlers: Handler<TCtxData, unknown>[],
   meta: TMeta,
 ) => ({
   pipe: (handler: Handler<TCtxData, unknown>) =>
-    chainImpl([...handlers, handler], meta),
+    pipeImpl([...handlers, handler], meta),
   meta,
   intoHandler: () => async (initialCtx: Context<TCtxData>) => {
     let ctx = initialCtx;
@@ -60,7 +60,7 @@ const chainImpl = <TCtxData extends object, TMeta>(
         continue;
       }
 
-      // Terminate chain and return result
+      // Terminate pipe and return result
       return result;
     }
 
@@ -68,8 +68,8 @@ const chainImpl = <TCtxData extends object, TMeta>(
   },
 });
 
-export const createChain: {
-  <TCtxData extends object>(meta?: undefined): NilChain<TCtxData, undefined>;
-  <TCtxData extends object, TMeta>(meta: TMeta): NilChain<TCtxData, TMeta>;
+export const createPipe: {
+  <TCtxData extends object>(meta?: undefined): NilPipe<TCtxData, undefined>;
+  <TCtxData extends object, TMeta>(meta: TMeta): NilPipe<TCtxData, TMeta>;
 } = <TCtxData extends object, TMeta>(meta: TMeta) =>
-  chainImpl([], meta) as NilChain<TCtxData, TMeta>;
+  pipeImpl([], meta) as NilPipe<TCtxData, TMeta>;
