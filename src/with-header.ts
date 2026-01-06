@@ -1,4 +1,4 @@
-import type { Context, Handler, RouteIntrinsics } from "../index.ts";
+import type { Context, Handler, RouteIntrinsics } from "./index.ts";
 
 export type ExpectFn<TCtx extends RouteIntrinsics, TRes> = (
   value: string | null,

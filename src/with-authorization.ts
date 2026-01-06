@@ -1,4 +1,4 @@
-import type { Context, Handler, RouteIntrinsics } from "../index.ts";
+import type { Context, Handler, RouteIntrinsics } from "./index.ts";
 import { withHeaderFn } from "./with-header.ts";
 
 export type AuthorizeFn<TCtx extends object, TRes> = (
