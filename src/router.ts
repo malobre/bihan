@@ -44,6 +44,8 @@ type Method =
 
 export const AnyMethod: unique symbol = Symbol();
 
+export const NoMatch: unique symbol = Symbol();
+
 type CreateRoutes<
   TCtxData extends object,
   TRoutes extends RoutePipe<TCtxData>[],
@@ -122,7 +124,13 @@ export const route: {
 
     const handler = route.intoHandler();
 
-    return await handler(context);
+    const result = await handler(context);
+
+    if (result === NoMatch) {
+      continue;
+    }
+
+    return result;
   }
 
   return undefined;

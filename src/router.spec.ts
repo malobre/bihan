@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AnyMethod, route } from "./router.ts";
+import { AnyMethod, NoMatch, route } from "./router.ts";
 
 describe("Router", () => {
   describe("route registration", () => {
@@ -589,5 +589,17 @@ describe("Router", () => {
       );
       expect(httpResult).toEqual({ protocol: "http:" });
     });
+  });
+
+  it("skip to next route when `NoMatch` is returned", async () => {
+    const result = await route(
+      ({ on }) => [
+        on("GET", "/health").pipe(() => NoMatch),
+        on("GET", "/health").pipe(() => ({ status: "ok" })),
+      ],
+      new Request("http://dummy.invalid/health"),
+    );
+
+    expect(result).toEqual({ status: "ok" });
   });
 });
