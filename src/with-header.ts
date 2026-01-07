@@ -8,6 +8,8 @@ export type ExpectFn<TCtx extends RouteIntrinsics, TRes> = (
 // Checks that a header is present, and, if provided, strictly equal to `expected`.
 //
 // `name` is case-insensitive.
+// `expected` should not contain sensitive data as it will be leaked in error
+// responses. Use `withHeaderFn` for custom failures.
 export const withHeader = (
   name: string,
   expected?: string | null,
