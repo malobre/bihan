@@ -293,7 +293,13 @@ Parses and validates the Authorization header:
 import { withAuthorization } from '@malobre/bihan/with-authorization.js';
 
 on('GET', '/api/protected')
-  .pipe(withAuthorization(({ scheme, credentials }, ctx) => {
+  .pipe(withAuthorization((value, ctx) => {
+    if (value === null) {
+      return new Response('missing `Authorization` header', { status: 401 });
+    }
+
+    const { scheme, credentials } = value;
+
     if (scheme !== 'Bearer' || !isValidToken(credentials)) {
       return new Response('Invalid token', { status: 401 });
     }

@@ -11,10 +11,7 @@ it("works", () => {
   });
 
   expect(
-    withAuthorization(
-      validator,
-      "",
-    )(
+    withAuthorization(validator)(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -36,10 +33,7 @@ it("handles empty header", () => {
   });
 
   expect(
-    withAuthorization(
-      validator,
-      "",
-    )(
+    withAuthorization(validator)(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -56,17 +50,14 @@ it("handles empty header", () => {
 });
 
 it("handles missing `Authorization` header", () => {
-  const validator = vi.fn();
+  const validator = vi.fn(() => new Response(null, { status: 401 }));
 
   const request = new Request("https://localhost", {
     method: "GET",
   });
 
   expect(
-    withAuthorization(
-      validator,
-      "",
-    )(
+    withAuthorization(validator)(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
@@ -75,7 +66,7 @@ it("handles missing `Authorization` header", () => {
     ),
   ).not.toBeUndefined();
 
-  expect(validator).not.toBeCalled();
+  expect(validator).toHaveBeenCalledOnce();
 });
 
 it("handles validator failure", () => {
@@ -89,10 +80,7 @@ it("handles validator failure", () => {
   });
 
   expect(
-    withAuthorization(
-      validator,
-      "",
-    )(
+    withAuthorization(validator)(
       createContext({
         request,
         urlPatternResult: {} as unknown as URLPatternResult,
