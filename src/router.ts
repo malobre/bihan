@@ -1,12 +1,11 @@
 import { type Context, createContext } from "./context.ts";
+import { filterMethod, type Method } from "./filter-method.ts";
+import { filterURLPattern } from "./filter-url-pattern.ts";
 import { createPipe, type NilPipe, type Pipe } from "./pipe.ts";
 
 export type RouteIntrinsics = {
   // The incoming HTTP request
   request: Request;
-
-  // URLPattern match result containing path parameters and other match data
-  urlPatternResult: URLPatternResult;
 };
 
 // A route handler function that receives a context and returns a value.
@@ -14,35 +13,12 @@ export type Handler<TCtxData extends object, TReturn> = (
   ctx: Context<TCtxData>,
 ) => TReturn;
 
-type RouteMeta = {
-  method: string | string[] | typeof AnyMethod;
-  pattern: URLPattern;
-};
-
 type RoutePipe<TCtxData extends object, TRes = unknown> = Pipe<
   Context.MergeUnwrapped<RouteIntrinsics, TCtxData>,
   object,
   TRes,
-  RouteMeta
+  undefined
 >;
-
-// Standardized HTTP methods + string escape hatch
-// See:
-// - <https://www.rfc-editor.org/rfc/rfc9110.html#section-9>
-// - <https://www.rfc-editor.org/rfc/rfc5789.html>
-type Method =
-  | "GET"
-  | "HEAD"
-  | "POST"
-  | "PUT"
-  | "DELETE"
-  | "CONNECT"
-  | "OPTIONS"
-  | "TRACE"
-  | "PATCH"
-  | (string & {});
-
-export const AnyMethod: unique symbol = Symbol();
 
 export const NoMatch: unique symbol = Symbol();
 
@@ -50,13 +26,25 @@ type CreateRoutes<
   TCtxData extends object,
   TRoutes extends RoutePipe<TCtxData>[],
 > = ({
+  createPipe,
   on,
 }: {
+  createPipe: () => NilPipe<
+    Context.MergeUnwrapped<TCtxData, RouteIntrinsics>,
+    undefined
+  >;
   on: (
-    method: Method | Method[] | typeof AnyMethod,
-    // A pathname component pattern, URLPattern or URLPatternInit
+    method: Method | Method[],
     pattern: string | URLPattern | URLPatternInit,
-  ) => NilPipe<Context.MergeUnwrapped<RouteIntrinsics, TCtxData>, RouteMeta>;
+  ) => Pipe<
+    RouteIntrinsics,
+    Context.MergeUnwrapped<
+      Context.MergeUnwrapped<TCtxData, RouteIntrinsics>,
+      { urlPatternResult: URLPatternResult }
+    >,
+    typeof NoMatch | undefined,
+    undefined
+  >;
 }) => TRoutes;
 
 // Routes an incoming HTTP request to the first matching handler.
@@ -84,42 +72,18 @@ export const route: {
   request: Request,
   ctxData: TCtxData,
 ) => {
-  // PERF: This is probably the most inefficient way to check for a match,
-  // we should use a prefix trie.
   for (const route of Iterator.from(
     createRoutes({
+      createPipe: () => createPipe(),
       on: (method, pattern) =>
-        createPipe({
-          method,
-          pattern:
-            pattern instanceof URLPattern
-              ? pattern
-              : typeof pattern === "string"
-                ? new URLPattern({ pathname: pattern })
-                : new URLPattern(pattern),
-        }),
+        createPipe<RouteIntrinsics>()
+          .pipe(filterMethod(method))
+          .pipe(filterURLPattern(pattern)),
     }),
   )) {
-    if (
-      route.meta.method !== AnyMethod &&
-      (Array.isArray(route.meta.method)
-        ? !route.meta.method.some((method) => method === request.method)
-        : route.meta.method !== request.method)
-    ) {
-      continue;
-    }
-
-    const urlPatternResult = route.meta.pattern.exec(request.url);
-
-    if (urlPatternResult === null) continue;
-
     const context = createContext({
-      ...({
-        request,
-        urlPatternResult,
-      } satisfies RouteIntrinsics),
-      // provided context overrides everything
       ...ctxData,
+      request,
     }) as Context.Merge<RouteIntrinsics, TCtxData>;
 
     const handler = route.intoHandler();

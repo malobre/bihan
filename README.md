@@ -81,6 +81,7 @@ Handlers are added using `.pipe(handler)` and receive a `Context<T>`. They can r
 
 - **`Context` object** - pass the context to the next handler
 - **`undefined`** - keep the current context for the next handler
+- **`NoMatch`** - tells the router to try other routes
 - **Any other value** - Terminates the route and returns that value
 
 ### `Context<T>`
@@ -89,10 +90,10 @@ The initial context object passed to handlers contains:
 
 ```typescript
 {
+  ...T;                                 // Your custom context data
   request: Request;                     // The incoming HTTP request
   urlPatternResult: URLPatternResult;   // URLPattern match results
   with: <U>(data: U) => Context<T & U>; // Augment context
-  ...T                                  // Your custom context data
 }
 ```
 
@@ -229,17 +230,6 @@ const pattern = new URLPattern({
 
 on('GET', pattern).pipe((ctx) => {
   // Full control over matching
-})
-```
-
-### Wildcard Method Matching
-
-Match any HTTP method with `AnyMethod` symbol:
-
-```typescript
-on(AnyMethod, '/health').pipe((ctx) => {
-  // Responds to GET, POST, PUT, DELETE, etc.
-  return Response.json({ status: 'ok' });
 })
 ```
 
