@@ -12,26 +12,27 @@ export const withHeader = (
   name: string,
   expected?: string | null,
 ): Handler<RouteIntrinsics, Response | undefined> =>
-  expected === undefined
-    ? ({ request }) =>
-        request.headers.has(name)
-          ? undefined
-          : Response.json(
-              {
-                message: `expected header to be present: '${name}'`,
-              },
-              { status: 415 },
-            )
-    : withHeaderFn(name, (value) =>
-        value === expected
-          ? undefined
-          : Response.json(
-              {
-                message: `invalid header value for '${name}', expected '${expected}', got '${value}'`,
-              },
-              { status: 415 },
-            ),
+  withHeaderFn(name, (value) => {
+    if (value === null) {
+      return Response.json(
+        {
+          message: `expected header to be present: '${name}'`,
+        },
+        { status: 415 },
       );
+    }
+
+    if (expected === undefined || expected === value) {
+      return undefined;
+    }
+
+    return Response.json(
+      {
+        message: `invalid header value for '${name}', expected '${expected}', got '${value}'`,
+      },
+      { status: 415 },
+    );
+  });
 
 // Runs `expect` function against a header.
 //

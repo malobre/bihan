@@ -21,10 +21,7 @@ it("can check for presence", () => {
 it("fails on missing header", async () => {
   const request = new Request("https://localhost");
 
-  const result = withHeader(
-    "X-custom",
-    "value",
-  )(
+  const result = withHeader("X-custom")(
     createContext({
       request,
       urlPatternResult: {} as unknown as URLPatternResult,
@@ -35,10 +32,10 @@ it("fails on missing header", async () => {
   expect(result).toBeInstanceOf(Response);
 
   await expect((result as Response).json()).resolves.toMatchInlineSnapshot(`
-    {
-      "message": "invalid header value for 'X-custom', expected 'value', got 'null'",
-    }
-  `);
+      {
+        "message": "expected header to be present: 'X-custom'",
+      }
+    `);
 });
 
 it("can check for value", () => {
