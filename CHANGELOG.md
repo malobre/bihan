@@ -1,5 +1,11 @@
 # @malobre/bihan
 
+## 0.3.0
+
+### Minor Changes
+
+- d3987db: export `branch` util
+
 ## 0.2.0
 
 ### Minor Changes
