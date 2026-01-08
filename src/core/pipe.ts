@@ -58,6 +58,8 @@ const pipeImpl = <TCtxData extends object>(
         }
 
         if (isContext(result)) {
+          // As handlers run `TCtxData` might not be the actual type.
+          // This is fine because pipe continuity is ensured by our `Pipe` interface
           ctx = result as Context<TCtxData>;
           continue;
         }
