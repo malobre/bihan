@@ -14,7 +14,7 @@ export type Handler<TCtxData extends object, TReturn> = (
 ) => TReturn;
 
 type RoutePipe<TCtxData extends object, TRes = unknown> = Pipe<
-  Context.MergeUnwrapped<RouteIntrinsics, TCtxData>,
+  Context.MergeUnwrapped<TCtxData, RouteIntrinsics>,
   object,
   TRes
 >;
@@ -75,7 +75,7 @@ export const route: {
     const context = createContext({
       ...ctxData,
       request,
-    }) as Context.Merge<RouteIntrinsics, TCtxData>;
+    }) as Context.Merge<TCtxData, RouteIntrinsics>;
 
     const handler = route.intoHandler();
 
