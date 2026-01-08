@@ -72,10 +72,12 @@ export const route: {
           .pipe(filterURLPattern(pattern)),
     }),
   )) {
-    const context = createContext({
+    const context = createContext<
+      Context.MergeUnwrapped<TCtxData, RouteIntrinsics>
+    >({
       ...ctxData,
       request,
-    }) as Context.Merge<TCtxData, RouteIntrinsics>;
+    });
 
     const handler = route.intoHandler();
 
