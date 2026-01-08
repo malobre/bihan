@@ -1,4 +1,4 @@
-import { type Handler, NoMatch, type RouteIntrinsics } from "./core/router.ts";
+import { type Handler, NoMatch, type RouteIntrinsics } from "#core/router.ts";
 
 // Standardized HTTP methods + string escape hatch
 // See:

@@ -1,5 +1,5 @@
-import { filterMethod, type Method } from "../filter-method.ts";
-import { filterURLPattern } from "../filter-url-pattern.ts";
+import { filterMethod, type Method } from "#src/filter-method.ts";
+import { filterURLPattern } from "#src/filter-url-pattern.ts";
 import { type Context, createContext } from "./context.ts";
 import { createPipe, type NilPipe, type Pipe } from "./pipe.ts";
 

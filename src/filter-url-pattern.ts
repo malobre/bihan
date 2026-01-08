@@ -1,5 +1,5 @@
-import type { Context } from "./core/context.ts";
-import { type Handler, NoMatch, type RouteIntrinsics } from "./core/router.ts";
+import type { Context } from "#core/context.ts";
+import { type Handler, NoMatch, type RouteIntrinsics } from "#core/router.ts";
 
 export const filterURLPattern = <TCtxData extends RouteIntrinsics>(
   // A pathname component pattern, URLPattern or URLPatternInit

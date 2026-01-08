@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createContext } from "./core/context.ts";
-import { NoMatch } from "./core/router.ts";
+import { createContext } from "#core/context.ts";
+import { NoMatch } from "#core/router.ts";
 import { filterMethod } from "./filter-method.ts";
 
 describe("simple method filter", () => {

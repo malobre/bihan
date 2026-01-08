@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { createContext } from "./core/context.ts";
+import { createContext } from "#core/context.ts";
 import { withHeader } from "./with-header.ts";
 
 it("can check for presence", () => {

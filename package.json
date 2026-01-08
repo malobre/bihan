@@ -8,6 +8,10 @@
   "files": [
     "./dist/**/*"
   ],
+  "imports": {
+    "#src/*": "./src/*",
+    "#core/*": "./src/core/*"
+  },
   "exports": {
     ".": "./dist/index.js",
     "./*.js": "./dist/*.js"
