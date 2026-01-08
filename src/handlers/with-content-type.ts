@@ -1,4 +1,4 @@
-import type { Handler, RouteIntrinsics } from "./index.ts";
+import type { Handler, RouteIntrinsics } from "#src/index.ts";
 import { withHeaderFn } from "./with-header.ts";
 
 const caseInsensitiveCollator = new Intl.Collator("en", {

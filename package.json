@@ -14,7 +14,7 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./*.js": "./dist/*.js"
+    "./handlers/*.js": "./dist/handlers/*.js"
   },
   "types": "./dist/index.d.ts",
   "scripts": {
