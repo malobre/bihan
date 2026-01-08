@@ -16,8 +16,7 @@ export type Handler<TCtxData extends object, TReturn> = (
 type RoutePipe<TCtxData extends object, TRes = unknown> = Pipe<
   Context.MergeUnwrapped<RouteIntrinsics, TCtxData>,
   object,
-  TRes,
-  undefined
+  TRes
 >;
 
 export const NoMatch: unique symbol = Symbol();
@@ -29,10 +28,7 @@ type CreateRoutes<
   createPipe,
   on,
 }: {
-  createPipe: () => NilPipe<
-    Context.MergeUnwrapped<TCtxData, RouteIntrinsics>,
-    undefined
-  >;
+  createPipe: () => NilPipe<Context.MergeUnwrapped<TCtxData, RouteIntrinsics>>;
   on: (
     method: Method | Method[],
     pattern: string | URLPattern | URLPatternInit,
@@ -42,8 +38,7 @@ type CreateRoutes<
       Context.MergeUnwrapped<TCtxData, RouteIntrinsics>,
       { urlPatternResult: URLPatternResult }
     >,
-    typeof NoMatch | undefined,
-    undefined
+    typeof NoMatch | undefined
   >;
 }) => TRoutes;
 
@@ -98,8 +93,8 @@ export const route: {
 
 export const branch = async <TRes, TCtxData extends object>(
   factory: (
-    pipe: NilPipe<NoInfer<TCtxData>, undefined>["pipe"],
-  ) => Pipe<NoInfer<TCtxData>, object, TRes, undefined>,
+    pipe: NilPipe<NoInfer<TCtxData>>["pipe"],
+  ) => Pipe<NoInfer<TCtxData>, object, TRes>,
   ctx: Context<TCtxData>,
 ): Promise<TRes> =>
   await factory(createPipe<TCtxData>().pipe).intoHandler()(ctx);

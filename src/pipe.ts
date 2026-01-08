@@ -8,7 +8,6 @@ export interface Pipe<
   TInitialCtxData extends object,
   TCtxData extends object,
   TResponse,
-  TMeta,
 > {
   pipe<TReturn>(
     handler: [TCtxData] extends [never]
@@ -22,41 +21,30 @@ export interface Pipe<
     | Context.Unwrap<Awaited<TReturn>>,
     // If TResponse is strictly undefined (which would be the case for a nil pipe), override, otherwise accumulate.
     | (undefined extends TResponse ? never : TResponse)
-    | ExtractNonCtx<Awaited<TReturn>>,
-    TMeta
+    | ExtractNonCtx<Awaited<TReturn>>
   >;
 
   intoHandler(): Handler<TInitialCtxData, Promise<TResponse>>;
-
-  meta: TMeta;
 }
 
 export namespace Pipe {
   export type ReturnType<P> =
-    P extends Pipe<
-      infer _TInitialCtxData,
-      infer _TCtxData,
-      infer TResponse,
-      infer _TMeta
-    >
+    P extends Pipe<infer _TInitialCtxData, infer _TCtxData, infer TResponse>
       ? TResponse
       : never;
 }
 
-export type NilPipe<TCtxData extends object, TMeta> = Pipe<
+export type NilPipe<TCtxData extends object> = Pipe<
   TCtxData,
   TCtxData,
-  undefined,
-  TMeta
+  undefined
 >;
 
-const pipeImpl = <TCtxData extends object, TMeta>(
+const pipeImpl = <TCtxData extends object>(
   handlers: Handler<TCtxData, unknown>[],
-  meta: TMeta,
 ) => ({
   pipe: (handler: Handler<TCtxData, unknown>) =>
-    pipeImpl([...handlers, handler], meta),
-  meta,
+    pipeImpl([...handlers, handler]),
   intoHandler: () => async (initialCtx: Context<TCtxData>) => {
     let ctx = initialCtx;
 
@@ -80,8 +68,5 @@ const pipeImpl = <TCtxData extends object, TMeta>(
   },
 });
 
-export const createPipe: {
-  <TCtxData extends object>(meta?: undefined): NilPipe<TCtxData, undefined>;
-  <TCtxData extends object, TMeta>(meta: TMeta): NilPipe<TCtxData, TMeta>;
-} = <TCtxData extends object, TMeta>(meta: TMeta) =>
-  pipeImpl([], meta) as NilPipe<TCtxData, TMeta>;
+export const createPipe = <TCtxData extends object>() =>
+  pipeImpl([]) as NilPipe<TCtxData>;
