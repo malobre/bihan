@@ -56,17 +56,13 @@ export const route: {
     createRoutes: CreateRoutes<object, TRoutes>,
     request: Request,
     ctxData?: undefined,
-  ): Promise<
-    Awaited<ReturnType<ReturnType<TRoutes[number]["intoHandler"]>>> | undefined
-  >;
+  ): Promise<Pipe.ReturnType<TRoutes[number]> | undefined>;
 
   <TCtxData extends object, TRoutes extends RoutePipe<TCtxData>[]>(
     createRoutes: CreateRoutes<TCtxData, TRoutes>,
     request: Request,
     ctxData: TCtxData,
-  ): Promise<
-    Awaited<ReturnType<ReturnType<TRoutes[number]["intoHandler"]>>> | undefined
-  >;
+  ): Promise<Pipe.ReturnType<TRoutes[number]> | undefined>;
 } = async <TCtxData extends object, TRoutes extends RoutePipe<TCtxData>[]>(
   createRoutes: CreateRoutes<TCtxData, TRoutes>,
   request: Request,

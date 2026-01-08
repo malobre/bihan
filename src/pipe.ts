@@ -31,6 +31,18 @@ export interface Pipe<
   meta: TMeta;
 }
 
+export namespace Pipe {
+  export type ReturnType<P> =
+    P extends Pipe<
+      infer _TInitialCtxData,
+      infer _TCtxData,
+      infer TResponse,
+      infer _TMeta
+    >
+      ? TResponse
+      : never;
+}
+
 export type NilPipe<TCtxData extends object, TMeta> = Pipe<
   TCtxData,
   TCtxData,
