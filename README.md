@@ -84,28 +84,6 @@ Handlers are added using `.pipe(handler)` and receive a `Context<T>`. They can r
 - **`NoMatch`** - tells the router to try other routes
 - **Any other value** - Terminates the route and returns that value
 
-### `Context<T>`
-
-The initial context object passed to handlers contains:
-
-```typescript
-{
-  ...T;                                 // Your custom context data
-  request: Request;                     // The incoming HTTP request
-  urlPatternResult: URLPatternResult;   // URLPattern match results
-  with: <U>(data: U) => Context<T & U>; // Augment context
-}
-```
-
-**Accessing Path Parameters:**
-
-```typescript
-on('GET', '/users/:userId/posts/:postId').pipe((ctx) => {
-  const { userId, postId } = ctx.urlPatternResult.pathname.groups;
-  return Response.json({ userId, postId });
-})
-```
-
 ## Best Practices
 
 ### Route Organization
@@ -130,56 +108,16 @@ Create composable middleware by defining handler functions:
 ```typescript
 import type { Context } from '@malobre/bihan';
 
-// Authentication middleware - generic over context type
-const requireAuth = <TCtxData>(ctx: Context<TCtxData>) => {
-  const token = ctx.request.headers.get('authorization');
-  if (!token) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-  return ctx.with({ token });
-};
-
 // Validation middleware - generic over context type
 const validateBody = async <TCtxData>(ctx: Context<TCtxData>) => {
   const body = await ctx.request.json();
+
   if (!body.name) {
     return Response.json({ error: 'Name required' }, { status: 400 });
   }
+
   return ctx.with({ body });
 };
-
-// Use in routes
-on('POST', '/api/users')
-  .pipe(requireAuth)
-  .pipe(validateBody)
-  .pipe((ctx) => {
-    // TypeScript infers ctx has { token: string, body: any }
-    return Response.json({ created: true });
-  })
-```
-
-### Error Handling
-
-Let errors propagate and handle them at the top level:
-
-```typescript
-try {
-  const result = await route(({ on }) => [...], request);
-
-  if (result === undefined) {
-    return new Response('Not Found', { status: 404 });
-  }
-
-  // Handle non-Response results
-  if (!(result instanceof Response)) {
-    return Response.json(result);
-  }
-
-  return result;
-} catch (error) {
-  console.error('Route error:', error);
-  return new Response('Internal Server Error', { status: 500 });
-}
 ```
 
 ## Advanced Features
@@ -197,13 +135,13 @@ const appContext = {
 await route(
   ({ on }) => [
     on('GET', '/users').pipe(async (ctx) => {
-      // ctx.db and ctx.config are available in all handlers
+      // ctx.db and ctx.config are available and properly typed
       const users = await ctx.db.query('SELECT * FROM users');
       return Response.json(users);
     }),
   ],
   request,
-  appContext // Available in all handlers
+  appContext
 );
 ```
 
