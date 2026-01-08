@@ -43,28 +43,31 @@ export type NilPipe<TCtxData extends object> = Pipe<
 const pipeImpl = <TCtxData extends object>(
   handlers: Handler<TCtxData, unknown>[],
 ) => ({
-  pipe: (handler: Handler<TCtxData, unknown>) =>
-    pipeImpl([...handlers, handler]),
-  intoHandler: () => async (initialCtx: Context<TCtxData>) => {
-    let ctx = initialCtx;
+  pipe(handler: Handler<TCtxData, unknown>) {
+    return pipeImpl([...handlers, handler]);
+  },
+  intoHandler() {
+    return async (initialCtx: Context<TCtxData>) => {
+      let ctx = initialCtx;
 
-    for (const handler of handlers) {
-      const result = await handler(ctx);
+      for (const handler of handlers) {
+        const result = await handler(ctx);
 
-      if (result === undefined) {
-        continue;
+        if (result === undefined) {
+          continue;
+        }
+
+        if (isContext(result)) {
+          ctx = result as Context<TCtxData>;
+          continue;
+        }
+
+        // Terminate pipe and return result
+        return result;
       }
 
-      if (isContext(result)) {
-        ctx = result as Context<TCtxData>;
-        continue;
-      }
-
-      // Terminate pipe and return result
-      return result;
-    }
-
-    return undefined;
+      return undefined;
+    };
   },
 });
 
