@@ -42,6 +42,18 @@ await route(
 );
 ```
 
+## Design
+
+In bihan, routes are chains of functions, we call them "pipes".
+Functions in a pipe are called handlers, they take a single `Context` parameter.
+`Context` are objects, they provide a single `with(data)` function which return a new `Context` augmented with `data`
+The first handler in a pipe will receive a `Context<RouteIntrinsics>` which contains the HTTP request in its `request` field.
+Handlers can return any value, but some have specific effects:
+- a **`Context` object** - will be fed into the next handler
+- **`undefined`** - keep the current context for the next handler
+- **`NoMatch`** - tells the router to try other routes
+- **Any other value** - Terminates the route and returns that value
+
 ## API
 
 ### `route(createRoutes, request, ctxData?)`
@@ -50,7 +62,7 @@ Routes an incoming request to the first matching handler.
 
 **Parameters:**
 
-- `createRoutes` - Factory function that returns an array of routes
+- `createRoutes({ createPipe, on })` - Factory function that returns an array of routes
 - `request` - The incoming `Request` object
 - `ctxData` - Optional initial context data available to all handlers
 
@@ -62,6 +74,8 @@ Routes an incoming request to the first matching handler.
 - Errors from handlers propagate to the caller
 
 #### `on(method, pattern)`
+
+A shorthand for `createPipe().pipe(filterMethod(method)).pipe(filterURLPattern(pattern))`.
 
 Registers a route and returns a pipe builder.
 
@@ -84,26 +98,29 @@ Handlers are added using `.pipe(handler)` and receive a `Context<T>`. They can r
 - **`NoMatch`** - tells the router to try other routes
 - **Any other value** - Terminates the route and returns that value
 
-## Best Practices
+#### `createPipe()`
 
-### Route Organization
+Used when more advanced filtering is needed, return an empty pipe, which will resolve to `undefined` if called.
 
-Group related routes together and order from most specific to least specific:
+## Handlers, middlewares, and filters
 
-```typescript
-await route(({ on }) => [
-  // Specific routes first
-  on('GET', '/api/users/:id').pipe(getUserById),
-  on('POST', '/api/users').pipe(createUser),
+By convention, handlers that could return `NoMatch` are prefixed by `filter`.
+Handlers that are not final, i.e. could return a `Context`, are prefixed by `with`.
 
-  // Wildcards last
-  on('GET', '/api/*').pipe(catchAllApi),
-], request);
-```
+### Builtin filters
 
-### Reusable Middleware
+- `filterMethod`
+- `filterURLPattern`
 
-Create composable middleware by defining handler functions:
+### Builtin middlewares
+
+- `withHeader`
+- `withHeaderFn`
+- `withContentType`
+- `withAuthorization`
+
+### Composable handlers
+Create composable handlers by making them generic over the context data:
 
 ```typescript
 import type { Context } from '@malobre/bihan';
@@ -118,123 +135,4 @@ const validateBody = async <TCtxData>(ctx: Context<TCtxData>) => {
 
   return ctx.with({ body });
 };
-```
-
-## Advanced Features
-
-### Custom Context Data
-
-Pass initial context to all handlers via the third parameter:
-
-```typescript
-const appContext = {
-  db: database,
-  config: appConfig,
-};
-
-await route(
-  ({ on }) => [
-    on('GET', '/users').pipe(async (ctx) => {
-      // ctx.db and ctx.config are available and properly typed
-      const users = await ctx.db.query('SELECT * FROM users');
-      return Response.json(users);
-    }),
-  ],
-  request,
-  appContext
-);
-```
-
-### Full URLPattern Support
-
-Use any URLPattern features, not just pathname:
-
-```typescript
-on('GET', {
-  pathname: '/api/:version/*',
-  search: 'key=:apiKey',
-}).pipe((ctx) => {
-  const { version } = ctx.urlPatternResult.pathname.groups;
-  const { apiKey } = ctx.urlPatternResult.search.groups;
-  return Response.json({ version, apiKey });
-})
-
-// Or use URLPattern directly
-const pattern = new URLPattern({
-  protocol: 'https',
-  hostname: 'api.example.com',
-  pathname: '/v:version/*',
-});
-
-on('GET', pattern).pipe((ctx) => {
-  // Full control over matching
-})
-```
-
-### Helper Utilities
-
-Bihan provides helper utilities for common middleware tasks:
-
-#### `withHeader`
-
-Validates that a header is present or has a specific value:
-
-```typescript
-import { withHeader } from '@malobre/bihan/with-header.js';
-
-on('POST', '/api/data')
-  .pipe(withHeader('Content-Type', 'application/json'))
-  .pipe((ctx) => {
-    // Content-Type is validated
-    return Response.json({ success: true });
-  })
-
-// Or just check for presence
-on('POST', '/api/data')
-  .pipe(withHeader('X-API-Key'))
-  .pipe((ctx) => {
-    // X-API-Key header is present
-    return Response.json({ success: true });
-  })
-```
-
-#### `withContentType`
-
-Validates the Content-Type header (case-insensitive):
-
-```typescript
-import { withContentType } from '@malobre/bihan/with-content-type.js';
-
-on('POST', '/api/data')
-  .pipe(withContentType('application/json'))
-  .pipe((ctx) => {
-    // Content-Type is validated
-    return Response.json({ success: true });
-  })
-```
-
-#### `withAuthorization`
-
-Parses and validates the Authorization header:
-
-```typescript
-import { withAuthorization } from '@malobre/bihan/with-authorization.js';
-
-on('GET', '/api/protected')
-  .pipe(withAuthorization((value, ctx) => {
-    if (value === null) {
-      return new Response('missing `Authorization` header', { status: 401 });
-    }
-
-    const { scheme, credentials } = value;
-
-    if (scheme !== 'Bearer' || !isValidToken(credentials)) {
-      return new Response('Invalid token', { status: 401 });
-    }
-    return ctx.with({ token: credentials });
-  }))
-  .pipe((ctx) => {
-    // ctx.token is available
-    return Response.json({ data: 'protected' });
-  })
 ```
