@@ -10,7 +10,7 @@
   ],
   "exports": {
     ".": "./dist/index.js",
-    "./with-*.js": "./dist/with-*.js"
+    "./*.js": "./dist/*.js"
   },
   "types": "./dist/index.d.ts",
   "scripts": {

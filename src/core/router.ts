@@ -1,6 +1,6 @@
+import { filterMethod, type Method } from "../filter-method.ts";
+import { filterURLPattern } from "../filter-url-pattern.ts";
 import { type Context, createContext } from "./context.ts";
-import { filterMethod, type Method } from "./filter-method.ts";
-import { filterURLPattern } from "./filter-url-pattern.ts";
 import { createPipe, type NilPipe, type Pipe } from "./pipe.ts";
 
 export type RouteIntrinsics = {

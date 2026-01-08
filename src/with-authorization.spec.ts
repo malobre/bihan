@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { createContext } from "./context.ts";
+import { createContext } from "./core/context.ts";
 import { withAuthorization } from "./with-authorization.ts";
 
 it("works", () => {
