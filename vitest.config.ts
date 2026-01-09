@@ -8,7 +8,7 @@ export default defineConfig({
     },
     coverage: {
       include: ["src/**"],
-      exclude: ["*.spec-d.ts"],
+      exclude: ["*.spec-d.ts", "*.bench.ts"],
     },
   },
 });

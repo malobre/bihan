@@ -22,6 +22,7 @@
     "check": "tsc --project tsconfig.src.json",
     "pretest": "tsc --build --noCheck",
     "test": "vitest run",
+    "bench": "vitest bench",
     "coverage": "vitest run --typecheck=false --coverage --coverage.reporter=text",
     "prepare": "tsdown"
   },
